@@ -6,3 +6,9 @@ env/
 .env
 .env.*
 !.env.example
+
+# Local env files
+data/
+
+requirements.txt
+requirements-dev.txt
