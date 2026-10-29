@@ -1,7 +1,15 @@
 import os
+from pathlib import Path
+
 from dotenv import load_dotenv
 
 load_dotenv()
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Local policy corpus. Point DATA_DIR elsewhere (or swap the loader) when a
+# remote store is chosen later — nothing here talks to Google Cloud.
+DATA_DIR = Path(os.getenv("DATA_DIR", str(_PROJECT_ROOT / "data")))
 
 ## ENV VAR / SECRETS
 
