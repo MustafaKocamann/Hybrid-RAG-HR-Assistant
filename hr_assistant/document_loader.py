@@ -93,7 +93,7 @@ def _extract_pptx(path: Path) -> str:
 
 
 def _build_metadata(path: Path, root: Path, text: str) -> dict:
-    category = _extract_category(text)
+    category = extract_policy_category(text)
     relative = path.relative_to(root).as_posix()
     return {
         "source": relative,
@@ -104,7 +104,7 @@ def _build_metadata(path: Path, root: Path, text: str) -> dict:
     }
 
 
-def _extract_category(text: str) -> str:
+def extract_policy_category(text: str) -> str:
     match = _CATEGORY_RE.search(text)
     if not match:
         return ""

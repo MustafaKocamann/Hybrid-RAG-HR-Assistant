@@ -11,6 +11,11 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 # remote store is chosen later — nothing here talks to Google Cloud.
 DATA_DIR = Path(os.getenv("DATA_DIR", str(_PROJECT_ROOT / "data")))
 
+# Parsed JSON records written by processor.py (HR vs noise subfolders).
+PROCESSED_DIR = Path(os.getenv("PROCESSED_DIR", str(DATA_DIR / "processed")))
+PROCESSED_HR_DIR = PROCESSED_DIR / "hr"
+PROCESSED_NOISE_DIR = PROCESSED_DIR / "noise"
+
 ## ENV VAR / SECRETS
 
 JINA_API_KEY = os.getenv("JINA_API_KEY")
