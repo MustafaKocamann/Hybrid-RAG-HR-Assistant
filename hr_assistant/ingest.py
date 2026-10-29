@@ -1,9 +1,3 @@
-"""Ingest local data/ into two Qdrant Cloud collections.
-
-HR .txt files go into the clean collection. HR + data/noise/ go into the
-mixed collection used for retrieval reliability tests.
-"""
-
 from __future__ import annotations
 
 import argparse
