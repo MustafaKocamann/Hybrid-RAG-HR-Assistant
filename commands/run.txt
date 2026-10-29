@@ -1,0 +1,4 @@
+uv run python -m hr_assistant.ingestion
+uv run python -m hr_assistant.ingestion --force
+uv run python -m hr_assistant.ingestion --hr-only
+uv run python -m hr_assistant.ingestion --noisy-only

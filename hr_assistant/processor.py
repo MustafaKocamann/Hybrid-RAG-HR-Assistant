@@ -10,6 +10,8 @@ import json
 import logging
 from pathlib import Path
 
+from langchain_core.documents import Document
+
 from hr_assistant import config
 from hr_assistant.document_loader import load_documents
 
@@ -64,6 +66,29 @@ def load_processed_documents(processed_dir: Path | None = None) -> list[dict]:
     for path in sorted(root.rglob("*.json")):
         records.append(json.loads(path.read_text(encoding="utf-8")))
     return records
+
+
+def processed_records_to_documents(records: list[dict] | None = None) -> list[Document]:
+    """Turn processed JSON records into LangChain Documents for chunking."""
+    if records is None:
+        records = load_processed_documents()
+    documents: list[Document] = []
+    for record in records:
+        category = record.get("policy_category", "")
+        source_path = record.get("source_path") or record.get("source", "")
+        documents.append(
+            Document(
+                page_content=record.get("text", ""),
+                metadata={
+                    "source": source_path,
+                    "filename": record.get("source", ""),
+                    "policy_category": category,
+                    "category": category,
+                    "is_hr": category in config.HR_POLICY_CATEGORIES,
+                },
+            )
+        )
+    return documents
 
 
 if __name__ == "__main__":

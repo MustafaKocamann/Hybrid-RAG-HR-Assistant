@@ -99,5 +99,19 @@ GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "openai/gpt-oss-120b")
 
 
+def check_api_keys() -> None:
+    missing = [
+        name
+        for name, value in (
+            ("JINA_API_KEY", JINA_API_KEY),
+            ("QDRANT_URL", QDRANT_URL),
+            ("QDRANT_API_KEY", QDRANT_API_KEY),
+        )
+        if not value
+    ]
+    if missing:
+        raise RuntimeError(f"Missing required env vars: {', '.join(missing)}")
+
+
 
 

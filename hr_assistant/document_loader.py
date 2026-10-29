@@ -22,13 +22,32 @@ _CATEGORY_RE = re.compile(
 
 
 def load_documents(data_dir: Path | None = None) -> list[Document]:
-    """Return one LangChain Document per file under `data_dir` (recursive)."""
+    """Return one LangChain Document per source file under `data_dir` (recursive)."""
+    return _load(data_dir, noise_only=None)
+
+
+def load_hr_documents(data_dir: Path | None = None) -> list[Document]:
+    """HR policies only: files in data/ that are not under data/noise/."""
+    return _load(data_dir, noise_only=False)
+
+
+def load_noise_documents(data_dir: Path | None = None) -> list[Document]:
+    """Non-HR corpus under data/noise/ (pdf, docx, pptx, txt)."""
+    return _load(data_dir, noise_only=True)
+
+
+def _load(data_dir: Path | None, noise_only: bool | None) -> list[Document]:
     root = Path(data_dir) if data_dir is not None else DATA_DIR
     if not root.is_dir():
         raise FileNotFoundError(f"Data directory not found: {root}")
 
     documents: list[Document] = []
     for path in _iter_source_files(root):
+        is_noise = "noise" in path.relative_to(root).parts
+        if noise_only is True and not is_noise:
+            continue
+        if noise_only is False and is_noise:
+            continue
         text = _extract_text(path)
         if not text.strip():
             continue
@@ -45,7 +64,9 @@ def _iter_source_files(root: Path) -> list[Path]:
     files = [
         path
         for path in sorted(root.rglob("*"))
-        if path.is_file() and path.suffix.lower() in SUPPORTED_EXTENSIONS
+        if path.is_file()
+        and path.suffix.lower() in SUPPORTED_EXTENSIONS
+        and "processed" not in path.relative_to(root).parts
     ]
     return files
 
@@ -100,6 +121,7 @@ def _build_metadata(path: Path, root: Path, text: str) -> dict:
         "filename": path.name,
         "file_type": path.suffix.lower().lstrip("."),
         "category": category,
+        "policy_category": category,
         "is_hr": category in HR_POLICY_CATEGORIES,
     }
 
