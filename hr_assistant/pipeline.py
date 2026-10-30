@@ -18,14 +18,11 @@ OUTPUT_BLOCKED_MESSAGE = "I can't share that answer as generated — it was flag
 
 def _bootstrap_collection(collection_name: str, ingest_fn) -> None:
     """First-run convenience: if the Qdrant collection isn't there yet,
-    upload the corpus and ingest once. After that this is a no-op and
+    ingest once directly into Qdrant. After that this is a no-op and
     startup is just a connect."""
     if collection_exists(collection_name):
         return
-    logger.info("Collection '%s' not found — running first-time ingestion.", collection_name)
-    from hr_assistant.ingestion import upload_corpus_to_gcs
-
-    upload_corpus_to_gcs()
+    logger.info("Collection '%s' not found — running first-time ingestion into Qdrant.", collection_name)
     ingest_fn()
 
 
@@ -43,26 +40,25 @@ def _build_guarded_assistant(collection_name: str, ingest_fn):
 
 def build_hr_assistant():
     """The app's assistant — the guarded stack against the clean
-    `hr_policies` collection. Returns (agent, cache); drive it with ask()."""
-    from hr_assistant.ingestion import ingest_hr_policies
+    `hr_policies` / Qdrant collection. Returns (agent, cache); drive it with ask()."""
+    from hr_assistant.ingest import ingest_hr_policies
 
     return _build_guarded_assistant(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
 
 
 def build_reliability_assistant():
     """The same guarded stack against the mixed HR + noise
-    `hr_policies_noisy_demo` collection — used by demo_reliability.py and
-    redteam_test.py. Returns (agent, cache)."""
-    from hr_assistant.ingestion import ingest_noisy_corpus
+    `hr_policies_noisy_demo` collection. Returns (agent, cache)."""
+    from hr_assistant.ingest import ingest_noisy_corpus
 
     return _build_guarded_assistant(config.QDRANT_NOISY_COLLECTION_NAME, ingest_noisy_corpus)
 
 
 def build_plain_assistant():
     """No guardrails at all: the plain search tool + the plain SYSTEM_PROMPT
-    + memory. Kept ONLY as the red-team before/after baseline
-    (redteam_test.py). Returns a bare agent; drive it with ask_plain()."""
-    from hr_assistant.ingestion import ingest_hr_policies
+    + memory. Kept ONLY as the red-team before/after baseline.
+    Returns a bare agent; drive it with ask_plain()."""
+    from hr_assistant.ingest import ingest_hr_policies
 
     config.check_api_keys()
     _bootstrap_collection(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
@@ -74,8 +70,8 @@ def build_plain_assistant():
 # ── Asking ────────────────────────────────────────────────────────────────
 
 def ask_plain(agent, question: str, thread_id: str = "default-session") -> str:
-    """Raw agent call — no safety guardrail, no cache. Used by evaluate.py
-    (answer-quality measurement only) and the red-team plain baseline."""
+    """Raw agent call — no safety guardrail, no cache. Used by evaluations
+    and the red-team plain baseline."""
     return thread_memory.invoke_agent(agent, question, thread_id).text
 
 
@@ -86,15 +82,15 @@ def ask(agent, cache, question: str, thread_id: str = "default-session") -> str:
 
     Same thread_id across calls means the agent remembers prior turns via
     the checkpointer — pass a different thread_id to start a fresh
-    conversation (one per Streamlit session). A cache hit and an output
-    block are both written into that memory so a follow-up still sees the
-    turn, and a blocked answer never lingers in context."""
+    conversation. A cache hit and an output block are both written into that
+    memory so a follow-up still sees the turn, and a blocked answer never
+    lingers in context."""
     screen_text = thread_memory.input_text_for_screening(agent, question, thread_id)
     input_ok, input_reason = check_input(screen_text)
     logger.info("INPUT GUARDRAIL: %s (%s)", "pass" if input_ok else "block", input_reason)
     if not input_ok:
-        # Deliberately not written to memory — the point is to keep the
-        # blocked prompt out of the model's context entirely.
+        # Deliberately not written to memory — keep the blocked prompt
+        # out of the model's context entirely.
         return INPUT_BLOCKED_MESSAGE
 
     cached_answer = cache.lookup(question)
@@ -115,7 +111,5 @@ def ask(agent, cache, question: str, thread_id: str = "default-session") -> str:
     return answer
 
 
-# Backwards-compatible alias — this flow was called ask_reliably() when it
-# was reliability-only. The name stays so existing callers and traces don't
-# break.
+# Backwards-compatible alias
 ask_reliably = ask

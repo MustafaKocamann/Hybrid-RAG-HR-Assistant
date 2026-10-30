@@ -66,8 +66,6 @@ HR_POLICY_CATEGORIES = {
 # empirically against real queries rather than trusting it blindly.
 RELEVANCE_THRESHOLD = 0.35
 
-
-
 ## RELIABILITY — semantic cache
 
 SEMANTIC_CACHE_THRESHOLD = 0.93  # cosine similarity above this = cache hit
@@ -88,16 +86,20 @@ LANGSMITH_ENDPOINT = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchai
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "hybrid-rag")
 
-## JUDGE LLM — Groq, read by hr_assistant/evaluation.py.
-# A different model family from the app's Gemini, so the eval isn't the
-# model grading its own answers. gpt-oss on Groq is OpenAI-API-compatible,
-# so langchain-openai's ChatOpenAI talks to it directly — no new dependency.
-# GROQ_API_KEY is also the credential for the app's fallback model
-# (FALLBACK_MODEL_NAME, above — see hr_assistant/llm.py).
+## JUDGE LLM & GUARDRAILS — Groq
+# Groq-hosted judge & safety model.
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "openai/gpt-oss-120b")
+JUDGE_GROQ_API_KEY = os.getenv("JUDGE_GROQ_API_KEY", GROQ_API_KEY)
+
+## GUARDRAILS CONFIG (Groq safeguard)
+GUARDRAIL_PROVIDER = os.getenv("GUARDRAIL_PROVIDER", "groq_safeguard")
+GUARDRAIL_MODEL_NAME = os.getenv("GUARDRAIL_MODEL_NAME", "openai/gpt-oss-safeguard-20b")
+GUARDRAIL_FAIL_OPEN_INPUT = os.getenv("GUARDRAIL_FAIL_OPEN_INPUT", "false").lower() == "true"
+GUARDRAIL_FAIL_OPEN_OUTPUT = os.getenv("GUARDRAIL_FAIL_OPEN_OUTPUT", "true").lower() == "true"
+GUARDRAIL_HISTORY_TURNS = int(os.getenv("GUARDRAIL_HISTORY_TURNS", "2"))
 
 
 def check_api_keys() -> None:
@@ -112,7 +114,3 @@ def check_api_keys() -> None:
     ]
     if missing:
         raise RuntimeError(f"Missing required env vars: {', '.join(missing)}")
-
-
-
-
