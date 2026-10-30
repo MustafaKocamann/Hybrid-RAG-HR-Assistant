@@ -23,6 +23,13 @@ QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
+# Comma-separated allow-list used by app.py when Streamlit Google auth is on.
+ALLOWED_EMPLOYEE_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv("ALLOWED_EMPLOYEE_EMAILS", "").split(",")
+    if email.strip()
+}
+
 ## QDRANT
 
 QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "hybrid-rag")
