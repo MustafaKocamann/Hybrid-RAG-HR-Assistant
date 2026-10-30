@@ -21,6 +21,21 @@ def _gemini_model_id() -> str:
     return f"gemini/{name}"
 
 
+def _fallback_model_params() -> dict:
+    """Format model and params for the Groq fallback. LiteLLM routes Groq models
+    using 'groq/<model>' or 'openai/<model>' when api_base is configured."""
+    model = config.FALLBACK_MODEL_NAME
+    if model.startswith("openai/"):
+        model = f"openai/{model}"
+    elif not model.startswith("groq/"):
+        model = f"groq/{model}"
+    return {
+        "model": model,
+        "api_key": config.GROQ_API_KEY,
+        "api_base": config.GROQ_BASE_URL,
+    }
+
+
 @lru_cache(maxsize=1)
 def _get_router() -> Router:
     if not config.GOOGLE_API_KEY:
@@ -39,11 +54,7 @@ def _get_router() -> Router:
             },
             {
                 "model_name": FALLBACK_DEPLOYMENT,
-                "litellm_params": {
-                    "model": config.FALLBACK_MODEL_NAME,
-                    "api_key": config.GROQ_API_KEY,
-                    "api_base": config.GROQ_BASE_URL,
-                },
+                "litellm_params": _fallback_model_params(),
             },
         ],
         fallbacks=[{PRIMARY_DEPLOYMENT: [FALLBACK_DEPLOYMENT]}],
