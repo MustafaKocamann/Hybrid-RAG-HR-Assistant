@@ -26,7 +26,12 @@ def _bootstrap_collection(collection_name: str, ingest_fn) -> None:
     ingest_fn()
 
 
-def _build_guarded_assistant(collection_name: str, ingest_fn):
+def _build_guarded_assistant(
+    collection_name: str,
+    ingest_fn,
+    *,
+    use_checkpointer: bool = True,
+):
     """The secure stack: guarded search tool + RELIABILITY_SYSTEM_PROMPT +
     short-term memory + a semantic cache. Returns (agent, cache). ask() adds
     the input/output safety guardrails around this."""
@@ -34,7 +39,11 @@ def _build_guarded_assistant(collection_name: str, ingest_fn):
     _bootstrap_collection(collection_name, ingest_fn)
 
     vector_store = load_vector_store(collection_name)
-    agent = create_reliability_agent(get_llm(), [create_guarded_search_tool(vector_store)])
+    agent = create_reliability_agent(
+        get_llm(),
+        [create_guarded_search_tool(vector_store)],
+        use_checkpointer=use_checkpointer,
+    )
     return agent, SemanticCache()
 
 
@@ -46,12 +55,16 @@ def build_hr_assistant():
     return _build_guarded_assistant(config.QDRANT_COLLECTION_NAME, ingest_hr_policies)
 
 
-def build_reliability_assistant():
+def build_reliability_assistant(*, use_checkpointer: bool = True):
     """The same guarded stack against the mixed HR + noise
     `hr_policies_noisy_demo` collection. Returns (agent, cache)."""
     from hr_assistant.ingest import ingest_noisy_corpus
 
-    return _build_guarded_assistant(config.QDRANT_NOISY_COLLECTION_NAME, ingest_noisy_corpus)
+    return _build_guarded_assistant(
+        config.QDRANT_NOISY_COLLECTION_NAME,
+        ingest_noisy_corpus,
+        use_checkpointer=use_checkpointer,
+    )
 
 
 def build_plain_assistant():
