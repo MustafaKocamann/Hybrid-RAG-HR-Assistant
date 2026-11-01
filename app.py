@@ -165,14 +165,6 @@ footer                        { visibility: hidden; height: 0; }
   line-height: 1.4;
 }
 
-/* ── Sidebar expander ── */
-[data-testid="stSidebar"] .stExpander {
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-radius: 10px !important;
-  background: rgba(255,255,255,0.03) !important;
-}
-[data-testid="stSidebar"] .stExpander summary { color: #B8CDD9 !important; }
-
 /* ── Sidebar footer note ── */
 .sidebar-footer {
   font-size: 0.72rem;
@@ -373,28 +365,6 @@ div[data-testid="stHorizontalBlock"] .stButton > button:hover {
   text-transform: uppercase;
   margin-bottom: 0.25rem;
 }
-
-/* ── Retrieval explainer in the sidebar ── */
-.rag-step {
-  display: flex;
-  gap: 0.55rem;
-  margin: 0.45rem 0;
-  color: #BFD0DE !important;
-  font-size: 0.75rem;
-  line-height: 1.4;
-}
-.rag-step b {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
-  background: rgba(40,168,159,0.2);
-  color: #6BD4CC !important;
-  font-size: 0.68rem;
-  flex-shrink: 0;
-}
-
 
 /* Chat input box */
 [data-testid="stChatInput"] {
@@ -616,24 +586,6 @@ def _render_sidebar(tracing_ok: bool, tracing_msg: str) -> None:
         st.markdown(f'<div class="topic-wrap">{chips}</div>', unsafe_allow_html=True)
 
         st.markdown("---")
-
-        # ── Workspace status ────────────────────────────────
-        with st.expander("Workspace status", expanded=False):
-            trace_icon = "🟢" if tracing_ok else "⚪"
-            st.caption(f"{trace_icon} Tracing · {tracing_msg}")
-            st.caption(f"🛡️ Guardrail: {config.GUARDRAIL_PROVIDER}")
-            st.caption(f"📚 Collection: {config.QDRANT_COLLECTION_NAME}")
-            st.caption(f"🤖 Model: {config.LLM_MODEL_NAME}")
-
-        with st.expander("How HR Atlas finds answers", expanded=False):
-            st.markdown(
-                """
-                <div class="rag-step"><b>1</b><span>Your question is screened for safety.</span></div>
-                <div class="rag-step"><b>2</b><span>Hybrid retrieval searches policy text by meaning and keywords.</span></div>
-                <div class="rag-step"><b>3</b><span>The assistant answers only within the approved HR policy scope.</span></div>
-                """,
-                unsafe_allow_html=True,
-            )
 
         st.markdown("---")
 
