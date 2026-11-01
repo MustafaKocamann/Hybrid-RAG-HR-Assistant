@@ -218,6 +218,48 @@ footer                        { visibility: hidden; height: 0; }
   max-width: 640px;
 }
 
+/* ── RAG trust strip ── */
+.trust-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+  margin-top: 1.15rem;
+}
+.trust-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.62rem 0.7rem;
+  border: 1px solid #E1E9F1;
+  border-radius: 11px;
+  background: #F8FAFC;
+}
+.trust-card .trust-icon {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: #E5F4F1;
+  color: #14766F;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.trust-card strong {
+  display: block;
+  color: #16344F;
+  font-size: 0.74rem;
+  line-height: 1.25;
+}
+.trust-card span {
+  display: block;
+  color: #6A7E91;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  margin-top: 0.12rem;
+}
+
 /* ── Status pills row ── */
 .status-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.85rem; }
 .pill {
@@ -289,6 +331,70 @@ div[data-testid="stHorizontalBlock"] .stButton > button:hover {
   box-shadow: 0 3px 12px rgba(15,39,68,0.04);
   margin-bottom: 0.15rem;
 }
+[data-testid="stChatMessage"]:has([data-testid="stMarkdownContainer"]) {
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+[data-testid="stChatMessage"]:hover {
+  border-color: #C8D9E7;
+  box-shadow: 0 5px 16px rgba(15,39,68,0.07);
+}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+  color: #263D52;
+  line-height: 1.65;
+}
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h1,
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h2,
+[data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] h3 {
+  color: #12324E;
+  letter-spacing: -0.02em;
+}
+
+/* RAG provenance note below assistant answers */
+.provenance {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.2rem 0 0.4rem 2.8rem;
+  color: #6D8294;
+  font-size: 0.71rem;
+}
+.provenance .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #27A395;
+  box-shadow: 0 0 0 3px #E4F4F1;
+}
+.answer-label {
+  color: #14766F;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+/* ── Retrieval explainer in the sidebar ── */
+.rag-step {
+  display: flex;
+  gap: 0.55rem;
+  margin: 0.45rem 0;
+  color: #BFD0DE !important;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+.rag-step b {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(40,168,159,0.2);
+  color: #6BD4CC !important;
+  font-size: 0.68rem;
+  flex-shrink: 0;
+}
+
 
 /* Chat input box */
 [data-testid="stChatInput"] {
@@ -387,6 +493,8 @@ div[data-testid="stHorizontalBlock"] .stButton > button:hover {
   }
   .hero    { padding: 1rem 1.05rem; }
   .gate    { margin-top: 5vh; padding: 1.5rem 1.2rem; }
+  .trust-strip { grid-template-columns: 1fr; }
+  .provenance { margin-left: 0.5rem; }
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -517,6 +625,16 @@ def _render_sidebar(tracing_ok: bool, tracing_msg: str) -> None:
             st.caption(f"📚 Collection: {config.QDRANT_COLLECTION_NAME}")
             st.caption(f"🤖 Model: {config.LLM_MODEL_NAME}")
 
+        with st.expander("How HR Atlas finds answers", expanded=False):
+            st.markdown(
+                """
+                <div class="rag-step"><b>1</b><span>Your question is screened for safety.</span></div>
+                <div class="rag-step"><b>2</b><span>Hybrid retrieval searches policy text by meaning and keywords.</span></div>
+                <div class="rag-step"><b>3</b><span>The assistant answers only within the approved HR policy scope.</span></div>
+                """,
+                unsafe_allow_html=True,
+            )
+
         st.markdown("---")
 
         # ── Auth / user ─────────────────────────────────────
@@ -551,6 +669,20 @@ def _render_hero() -> None:
             <span class="pill ok">&#10003; Grounded in policy files</span>
             <span class="pill info">Hybrid search · BM25 + semantic</span>
             <span class="pill">&#128737; Safety screened</span>
+          </div>
+          <div class="trust-strip">
+            <div class="trust-card">
+              <div class="trust-icon">01</div>
+              <div><strong>Official sources</strong><span>Answers stay inside HR policy documents</span></div>
+            </div>
+            <div class="trust-card">
+              <div class="trust-icon">02</div>
+              <div><strong>Relevant retrieval</strong><span>Keyword + semantic search improves recall</span></div>
+            </div>
+            <div class="trust-card">
+              <div class="trust-icon">03</div>
+              <div><strong>Safe by design</strong><span>Guardrails screen input and output</span></div>
+            </div>
           </div>
         </div>
         """,
@@ -640,7 +772,13 @@ else:
             if msg.get("blocked"):
                 _blocked_card(msg["content"])
             else:
+                st.markdown('<div class="answer-label">HR Atlas answer</div>', unsafe_allow_html=True)
                 st.markdown(msg["content"])
+                st.markdown(
+                    '<div class="provenance"><span class="dot"></span>'
+                    'Retrieved from the HR policy knowledge base</div>',
+                    unsafe_allow_html=True,
+                )
 
 # ── Chat input ──
 typed = st.chat_input("Ask about leave, WFH, notice period, expenses…")
@@ -660,7 +798,13 @@ if question:
         if blocked:
             _blocked_card(answer)
         else:
+            st.markdown('<div class="answer-label">HR Atlas answer</div>', unsafe_allow_html=True)
             st.markdown(answer)
+            st.markdown(
+                '<div class="provenance"><span class="dot"></span>'
+                'Retrieved from the HR policy knowledge base</div>',
+                unsafe_allow_html=True,
+            )
 
     # Persist to session state and rerender
     if answer != INPUT_BLOCKED_MESSAGE:
