@@ -14,31 +14,36 @@ class _SafetyVerdict(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# Groq safeguard provider
+# LiteLLM safeguard provider
 # ---------------------------------------------------------------------------
 
-_groq_safeguard_llm = None
+_safeguard_llm = None
 
 
-def _groq_safeguard_client():
-    """Lazy-initialised ChatOpenAI pointed at Groq's OpenAI-compatible endpoint,
-    using the dedicated JUDGE_GROQ_API_KEY and the safeguard model.
+def _safeguard_client():
+    """Lazy-initialise the safety classifier through LiteLLM.
+
     Structured output ensures we always get a parseable verdict."""
-    global _groq_safeguard_llm
-    if _groq_safeguard_llm is None:
+    global _safeguard_llm
+    if _safeguard_llm is None:
         from langchain_openai import ChatOpenAI
 
-        _groq_safeguard_llm = ChatOpenAI(
+        if not config.LITELLM_API_KEY:
+            raise RuntimeError("LITELLM_API_KEY is missing from the environment.")
+
+        _safeguard_llm = ChatOpenAI(
             model=config.GUARDRAIL_MODEL_NAME,
-            openai_api_key=config.JUDGE_GROQ_API_KEY,
-            openai_api_base=config.GROQ_BASE_URL,
+            api_key=config.LITELLM_API_KEY,
+            base_url=config.LITELLM_BASE_URL,
             temperature=0,
+            timeout=config.LLM_TIMEOUT_SECONDS,
+            max_retries=config.LLM_MAX_RETRIES,
         ).with_structured_output(_SafetyVerdict)
-    return _groq_safeguard_llm
+    return _safeguard_llm
 
 
-def _check_with_groq_safeguard(text: str, direction: str) -> tuple[bool, str]:
-    """Send *text* to the Groq safeguard model and return (safe, reason).
+def _check_with_safeguard(text: str, direction: str) -> tuple[bool, str]:
+    """Send *text* to the LiteLLM safety model and return (safe, reason).
 
     The prompt instructs the model to flag:
     - prompt injection / jailbreak attempts
@@ -46,7 +51,7 @@ def _check_with_groq_safeguard(text: str, direction: str) -> tuple[bool, str]:
     - attempts to reassign the assistant's identity / persona
     - leaked or solicited sensitive personal data
     """
-    llm = _groq_safeguard_client()
+    llm = _safeguard_client()
     role = (
         "a user's question to an HR assistant"
         if direction == "input"
@@ -95,8 +100,8 @@ def _check(text: str, direction: str) -> tuple[bool, str]:
     if config.GUARDRAIL_PROVIDER == "none":
         return True, "guardrail disabled"
     try:
-        # Only supported provider: groq_safeguard
-        return _check_with_groq_safeguard(text, direction)
+        # Only supported provider: litellm
+        return _check_with_safeguard(text, direction)
     except Exception as exc:  # noqa: BLE001 — a screening error must not crash the request
         return _on_provider_error(direction, exc)
 

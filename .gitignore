@@ -10,5 +10,5 @@ env/
 # Local env files
 data/
 
-requirements.txt
+!requirements.txt
 requirements-dev.txt

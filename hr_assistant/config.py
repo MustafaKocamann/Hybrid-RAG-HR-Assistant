@@ -21,8 +21,6 @@ PROCESSED_NOISE_DIR = PROCESSED_DIR / "noise"
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
 # Comma-separated allow-list used by app.py when Streamlit Google auth is on.
 ALLOWED_EMPLOYEE_EMAILS = {
     email.strip().lower()
@@ -39,9 +37,11 @@ QDRANT_COLLECTION_NAME = os.getenv("QDRANT_COLLECTION_NAME", "hybrid-rag")
 # of the clean single-domain collection above.
 QDRANT_NOISY_COLLECTION_NAME = os.getenv("QDRANT_NOISY_COLLECTION_NAME", "hr_policies_noisy_demo")
 
-LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "gemini-3.5-flash-lite")
-
-FALLBACK_MODEL_NAME = os.getenv("FALLBACK_MODEL_NAME", "openai/gpt-oss-20b")
+LITELLM_BASE_URL = os.getenv("LITELLM_BASE_URL", "http://localhost:4000/v1")
+LITELLM_API_KEY = os.getenv("LITELLM_API_KEY")
+LLM_MODEL_NAME = os.getenv("LLM_MODEL_NAME", "openai/gpt-oss-20b")
+LLM_TIMEOUT_SECONDS = float(os.getenv("LLM_TIMEOUT_SECONDS", "45"))
+LLM_MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "2"))
 
 EMBEDDING_MODEL_NAME = os.getenv("EMBEDDING_MODEL_NAME", "jina-embeddings-v2-base-en")
 
@@ -93,16 +93,12 @@ LANGSMITH_ENDPOINT = os.getenv("LANGSMITH_ENDPOINT", "https://api.smith.langchai
 LANGSMITH_API_KEY = os.getenv("LANGSMITH_API_KEY")
 LANGSMITH_PROJECT = os.getenv("LANGSMITH_PROJECT", "hybrid-rag")
 
-## JUDGE LLM & GUARDRAILS — Groq
-# Groq-hosted judge & safety model.
+## JUDGE LLM & GUARDRAILS — LiteLLM
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 JUDGE_MODEL_NAME = os.getenv("JUDGE_MODEL_NAME", "openai/gpt-oss-120b")
-JUDGE_GROQ_API_KEY = os.getenv("JUDGE_GROQ_API_KEY", GROQ_API_KEY)
 
-## GUARDRAILS CONFIG (Groq safeguard)
-GUARDRAIL_PROVIDER = os.getenv("GUARDRAIL_PROVIDER", "groq_safeguard")
+## GUARDRAILS CONFIG (LiteLLM safeguard)
+GUARDRAIL_PROVIDER = os.getenv("GUARDRAIL_PROVIDER", "litellm")
 GUARDRAIL_MODEL_NAME = os.getenv("GUARDRAIL_MODEL_NAME", "openai/gpt-oss-safeguard-20b")
 GUARDRAIL_FAIL_OPEN_INPUT = os.getenv("GUARDRAIL_FAIL_OPEN_INPUT", "false").lower() == "true"
 GUARDRAIL_FAIL_OPEN_OUTPUT = os.getenv("GUARDRAIL_FAIL_OPEN_OUTPUT", "true").lower() == "true"
