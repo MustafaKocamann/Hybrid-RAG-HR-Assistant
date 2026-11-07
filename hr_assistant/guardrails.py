@@ -21,20 +21,36 @@ _safeguard_llm = None
 
 
 def _safeguard_client():
-    """Lazy-initialise the safety classifier through LiteLLM.
+    """Lazy-initialise the safety classifier.
 
-    Structured output ensures we always get a parseable verdict."""
+    LiteLLM is preferred when configured; Groq is used otherwise. Structured
+    output ensures we always get a parseable verdict."""
     global _safeguard_llm
     if _safeguard_llm is None:
         from langchain_openai import ChatOpenAI
 
-        if not config.LITELLM_API_KEY:
-            raise RuntimeError("LITELLM_API_KEY is missing from the environment.")
+        if config.LITELLM_API_KEY:
+            model = config.GUARDRAIL_MODEL_NAME
+            api_key = config.LITELLM_API_KEY
+            base_url = config.LITELLM_BASE_URL
+        elif config.GROQ_API_KEY:
+            model = config.GUARDRAIL_MODEL_NAME
+            if model == "openai/gpt-oss-safeguard-20b":
+                model = config.FALLBACK_MODEL_NAME
+            api_key = config.GROQ_API_KEY
+            base_url = config.GROQ_BASE_URL
+            logger.warning(
+                "LITELLM_API_KEY is not configured; using Groq for guardrail checks."
+            )
+        else:
+            raise RuntimeError(
+                "No guardrail provider is configured. Set LITELLM_API_KEY or GROQ_API_KEY."
+            )
 
         _safeguard_llm = ChatOpenAI(
-            model=config.GUARDRAIL_MODEL_NAME,
-            api_key=config.LITELLM_API_KEY,
-            base_url=config.LITELLM_BASE_URL,
+            model=model,
+            api_key=api_key,
+            base_url=base_url,
             temperature=0,
             timeout=config.LLM_TIMEOUT_SECONDS,
             max_retries=config.LLM_MAX_RETRIES,
