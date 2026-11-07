@@ -16,7 +16,12 @@ _SPARSE_MODEL = "Qdrant/bm25"
 def _qdrant_client() -> QdrantClient:
     """One client for the process — collection_exists() is called a few
     times per startup and QdrantClient holds a connection pool."""
-    return QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY)
+    return QdrantClient(
+        url=config.QDRANT_URL,
+        port=None,
+        api_key=config.QDRANT_API_KEY,
+        timeout=config.QDRANT_TIMEOUT_SECONDS,
+    )
 
 
 def collection_exists(collection_name: str) -> bool:
@@ -45,7 +50,9 @@ def load_vector_store(
         collection_name=collection_name,
         embedding=get_embeddings_model(),
         url=config.QDRANT_URL,
+        port=None,
         api_key=config.QDRANT_API_KEY,
+        timeout=config.QDRANT_TIMEOUT_SECONDS,
     )
     if hybrid:
         kwargs["sparse_embedding"] = FastEmbedSparse(model_name=_SPARSE_MODEL)
@@ -82,8 +89,10 @@ def build_vector_store(chunks, hybrid: bool = True, collection_name: str = confi
         embedding=embeddings_model,
         ids=[_stable_chunk_id(c) for c in chunks],
         url=config.QDRANT_URL,
+        port=None,
         api_key=config.QDRANT_API_KEY,
         collection_name=collection_name,
+        timeout=config.QDRANT_TIMEOUT_SECONDS,
     )
 
     if hybrid:

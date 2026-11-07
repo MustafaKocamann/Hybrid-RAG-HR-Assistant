@@ -21,6 +21,7 @@ PROCESSED_NOISE_DIR = PROCESSED_DIR / "noise"
 JINA_API_KEY = os.getenv("JINA_API_KEY")
 QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
+QDRANT_TIMEOUT_SECONDS = int(os.getenv("QDRANT_TIMEOUT_SECONDS", "30"))
 # Comma-separated allow-list used by app.py when Streamlit Google auth is on.
 ALLOWED_EMPLOYEE_EMAILS = {
     email.strip().lower()
