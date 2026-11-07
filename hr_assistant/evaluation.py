@@ -1,6 +1,6 @@
 """Evaluation — answer-quality scoring, uploaded to LangSmith.
 
-Runs the real HR agent against evaluation_dataset.TEST_CASES (19) and scores
+Runs the real HR agent against evaluation_dataset.TEST_CASES and scores
 each answer on two dimensions with an LLM judge:
 
   1. CORRECTNESS  — matches the human-verified reference from the policy text?
@@ -45,10 +45,40 @@ def _judge_llm() -> ChatOpenAI:
 
 
 def _ensure_dataset(client: Client):
-    """Create the LangSmith dataset the first time, then reuse it."""
+    """Create the dataset or synchronize its examples with TEST_CASES."""
     if client.has_dataset(dataset_name=DATASET_NAME):
         logger.info("Dataset '%s' already exists — reusing it.", DATASET_NAME)
-        return client.read_dataset(dataset_name=DATASET_NAME)
+        dataset = client.read_dataset(dataset_name=DATASET_NAME)
+        examples = list(client.list_examples(dataset_id=dataset.id))
+        desired_questions = {case["question"] for case in TEST_CASES}
+        stale_examples = [
+            example
+            for example in examples
+            if example.inputs.get("question") not in desired_questions
+        ]
+        if stale_examples:
+            client.delete_examples([example.id for example in stale_examples])
+            logger.info("Removed %d stale example(s) from '%s'.", len(stale_examples), DATASET_NAME)
+
+        existing_questions = {
+            example.inputs.get("question")
+            for example in examples
+            if example not in stale_examples
+        }
+        missing_cases = [
+            case for case in TEST_CASES
+            if case["question"] not in existing_questions
+        ]
+        if missing_cases:
+            client.create_examples(
+                dataset_id=dataset.id,
+                examples=[
+                    {"inputs": {"question": case["question"]}, "outputs": {"answer": case["answer"]}}
+                    for case in missing_cases
+                ],
+            )
+            logger.info("Added %d missing example(s) to '%s'.", len(missing_cases), DATASET_NAME)
+        return dataset
 
     logger.info("Creating dataset '%s' with %d example(s).", DATASET_NAME, len(TEST_CASES))
     dataset = client.create_dataset(dataset_name=DATASET_NAME)

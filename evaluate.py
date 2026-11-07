@@ -1,5 +1,5 @@
 """
- evaluate.py — entry point: run the LangSmith evaluation (20).
+ evaluate.py — entry point: run the LangSmith evaluation.
 
 Needs LANGSMITH_API_KEY and GROQ_API_KEY in .env. Results land in your
 LangSmith project as an Experiment on the 'hr-policy-qa' dataset.
